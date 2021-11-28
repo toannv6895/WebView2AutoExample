@@ -9,12 +9,23 @@
         Title="MainWindow" Height="450" Width="800" WindowState="Maximized" WindowStartupLocation="CenterScreen">
     <Grid x:Name="main">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition x:Name="col1" Height="10*"/>
+            <RowDefinition Height="22*"/>
+            <RowDefinition Height="195*"/>
         </Grid.RowDefinitions>
-        <TextBlock x:Name="textBlock" Grid.Row="0" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top"/>
-        <TextBlock x:Name="textBlock2" HorizontalAlignment="Left" Margin="250,0,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Center"/>
-        <TextBlock x:Name="textBlock3" HorizontalAlignment="Left" Margin="458,12,0,11" TextWrapping="Wrap" Text="TextBlock"/>
-        <wv2:WebView2 Grid.Row="1" Name="webView" Source="https://www.microsoft.com/"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="11*"/>
+            <ColumnDefinition Width="39*"/>
+        </Grid.ColumnDefinitions>
+        <wv2:WebView2 Name="webView" Grid.Column="1" Source="https://www.microsoft.com/" Grid.RowSpan="2"/>
+        <TextBox HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Search" VerticalAlignment="Top" Width="120" Height="18"/>
+        <Button Content="Go" HorizontalAlignment="Left" Margin="140,9,0,0" VerticalAlignment="Top" Height="20" Width="19"/>
+        <DataGrid Grid.Column="0" Grid.Row="1">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Type"/>
+                <DataGridTextColumn Header="Content"/>
+                <DataGridTextColumn Header="Action"/>
+                <DataGridTextColumn Header="Position"/>
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </Window>

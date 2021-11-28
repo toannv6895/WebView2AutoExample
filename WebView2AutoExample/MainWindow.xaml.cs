@@ -29,14 +29,12 @@ namespace WebView2AutoExample
     /// </summary>
     public partial class MainWindow : Window
     {
-        [DllImport("user32.dll")]
-        public static extern bool GetCursorPos(out Point lpPoint);
-
         public Settings Settings { get; set; }
         /// <summary>
         /// The most recently captured cursor position.
         /// </summary>
         public PositionData Position { get; set; }
+        public MockupData MockupData { get; set; }
 
         //InputSimulator input = new InputSimulator();
         private MouseSimulator underlyingMouseSimulator;
@@ -46,6 +44,7 @@ namespace WebView2AutoExample
             InitializeComponent();
             Settings = new Settings();
             Position = new PositionData();
+            MockupData = new MockupData();
 
             webView.NavigationCompleted += WebView_NavigationCompleted;
             webView.CoreWebView2InitializationCompleted += WebView_CoreWebView2InitializationCompleted;
@@ -56,17 +55,16 @@ namespace WebView2AutoExample
   
         }
 
-        private void updatePosition() => updatePosition(new PositionData(new System.Drawing.Point((int)Mouse.GetPosition(this).X, (int)Mouse.GetPosition(this).Y)));
+        private Point updatePosition() => updatePosition(new PositionData(new System.Drawing.Point((int)Mouse.GetPosition(this).X, (int)Mouse.GetPosition(this).Y)));
 
         /// <summary>
         /// The method that determines all wanted values and that is called in every tick.
         /// </summary>
-        private void updatePosition(PositionData positionData)
+        private Point updatePosition(PositionData positionData)
         {
             // Update position.
             Position = positionData;
-
-            textBlock.Text = String.Format("X: {0} Y: {1}", Position.PhysicalPosition.X, Position.PhysicalPosition.Y);
+            return new Point(Position.PhysicalPosition.X, Position.PhysicalPosition.Y);
         }
 
         private void WebView_WebMessageReceived(object sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
@@ -76,19 +74,11 @@ namespace WebView2AutoExample
                 JsonObject jsonObject = JsonConvert.DeserializeObject<JsonObject>(e.WebMessageAsJson);
                 switch (jsonObject.Key)
                 {
-                    case "click":
-                        {
-                            textBlock2.Text = $"Clicked at x:{jsonObject.Value["X"].ToString()}, y:{jsonObject.Value["Y"].ToString()}";
-                        }
-                        break;
                     case "mousemove":
                         {
                             updatePosition(new PositionData(new System.Drawing.Point(System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y)));
-
-                            textBlock3.Text = $"Mouse move at x:{jsonObject.Value["X"].ToString()}, y:{jsonObject.Value["Y"].ToString()}";
                         }
                         break;
-
                 }
             }
             catch (Exception)
@@ -108,22 +98,27 @@ namespace WebView2AutoExample
             await Task.Run(() =>
             {
                 Thread.Sleep(2000);
- 
-                Point absolutePoint = ConvertPointToAbsolute(new Point(1490, 151));
-                underlyingMouseSimulator.MoveMouseTo(absolutePoint.X, absolutePoint.Y);
-                underlyingMouseSimulator.LeftButtonClick();
 
-                string values = "office";
-                foreach (var item in values)
+                foreach (var item in MockupData.commands)
                 {
-                    underlyingKeyboardSimulator.TextEntry(item);
-                    Thread.Sleep(500);
+                    if (item.Input == Input.OpenURL)
+                    {
+                        Dispatcher.Invoke(() => webView.Source = new Uri(item.Text));
+
+                        Thread.Sleep(2000);
+                    }
+                    else if (item.Input == Input.LeftClick)
+                    {
+                        Point absolutePoint = ConvertPointToAbsolute(new Point(1385, 644));
+                        underlyingMouseSimulator.MoveMouseTo(absolutePoint.X, absolutePoint.Y);
+                        underlyingMouseSimulator.LeftButtonClick();
+                    }
+                    else if (item.Input == Input.Write)
+                    {
+                        Thread.Sleep(300);
+                        underlyingKeyboardSimulator.TextEntry(item.Text);
+                    }
                 }
-                underlyingKeyboardSimulator.KeyDown(WindowsInput.Native.VirtualKeyCode.DOWN);
-                //Enter
-                underlyingKeyboardSimulator.KeyDown(WindowsInput.Native.VirtualKeyCode.RETURN);
-                Thread.Sleep(4000);
-                underlyingMouseSimulator.HorizontalScroll(5);
             });
         }
 
