@@ -1,7 +1,10 @@
-﻿using Microsoft.Web.WebView2.Core;
+﻿using Indieteur.GlobalHooks;
+using Microsoft.Web.WebView2.Core;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -29,76 +32,67 @@ namespace WebView2AutoExample
     /// </summary>
     public partial class MainWindow : Window
     {
-        public Settings Settings { get; set; }
-        /// <summary>
-        /// The most recently captured cursor position.
-        /// </summary>
-        public PositionData Position { get; set; }
+        public PositionData CurrentPoint { get; set; }
         public MockupData MockupData { get; set; }
+        public bool IsRunning { get; private set; }
 
-        //InputSimulator input = new InputSimulator();
+        public bool IsCapturing = false;
+        public System.Drawing.Point StartCaptureImagePoint;
+        System.Windows.Shapes.Rectangle RectCapture = new System.Windows.Shapes.Rectangle();
+        private System.Windows.Point Start;
+        private System.Windows.Point Current;
+        private double X, Y, W, H;
+
         private MouseSimulator underlyingMouseSimulator;
         private KeyboardSimulator underlyingKeyboardSimulator;
+        GlobalKeyHook globalKeyHook;
+        GlobalMouseHook globalMouseHook;
         public MainWindow()
         {
             InitializeComponent();
-            Settings = new Settings();
-            Position = new PositionData();
+            CurrentPoint = new PositionData();
             MockupData = new MockupData();
 
-            webView.NavigationCompleted += WebView_NavigationCompleted;
-            webView.CoreWebView2InitializationCompleted += WebView_CoreWebView2InitializationCompleted;
-            webView.WebMessageReceived += WebView_WebMessageReceived;
             underlyingMouseSimulator = new MouseSimulator(new InputSimulator());
             underlyingKeyboardSimulator = new KeyboardSimulator(new InputSimulator());
-            webView.ZoomFactor = 1;
-  
+            this.MouseLeftButtonDown += MainWindow_MouseLeftButtonDown;
+
+            RectCapture.Stroke = new SolidColorBrush(Colors.Black);
+            RectCapture.StrokeDashArray = new DoubleCollection { 4, 4 };
+            RectCapture.SnapsToDevicePixels = true;
+            RectCapture.StrokeThickness = 2;
+            RectCapture.Fill = new SolidColorBrush(Colors.White);
+
+            InitializeAsync();
+
+            InitMacro();
         }
 
-        private Point updatePosition() => updatePosition(new PositionData(new System.Drawing.Point((int)Mouse.GetPosition(this).X, (int)Mouse.GetPosition(this).Y)));
-
-        /// <summary>
-        /// The method that determines all wanted values and that is called in every tick.
-        /// </summary>
-        private Point updatePosition(PositionData positionData)
+        private void MainWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Update position.
-            Position = positionData;
-            return new Point(Position.PhysicalPosition.X, Position.PhysicalPosition.Y);
+            IsCapturing = true;
+
+            Start = Mouse.GetPosition(MainBrowser);
+
+            Canvas.SetLeft(RectCapture, Start.X);
+            Canvas.SetTop(RectCapture, Start.Y);
         }
 
-        private void WebView_WebMessageReceived(object sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
+        async void InitializeAsync()
         {
-            try
-            {
-                JsonObject jsonObject = JsonConvert.DeserializeObject<JsonObject>(e.WebMessageAsJson);
-                switch (jsonObject.Key)
-                {
-                    case "mousemove":
-                        {
-                            updatePosition(new PositionData(new System.Drawing.Point(System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y)));
-                        }
-                        break;
-                }
-            }
-            catch (Exception)
-            {
+            await webView.EnsureCoreWebView2Async(null);
 
-            }
+            //if (!IsRunning)
+            //{
+            //    string script = File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + @"\Scripts\PostMouse.js");
+            //    await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(script);
+            //}
         }
 
-        private async void WebView_CoreWebView2InitializationCompleted(object sender, Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs e)
-        {
-            string script = File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + @"\Scripts\Mouse.js");
-            await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(script);
-        }
-
-        private async void WebView_NavigationCompleted(object sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e)
+        private async void InitMacro()
         {
             await Task.Run(() =>
             {
-                Thread.Sleep(2000);
-
                 foreach (var item in MockupData.commands)
                 {
                     if (item.Input == Input.OpenURL)
@@ -109,7 +103,7 @@ namespace WebView2AutoExample
                     }
                     else if (item.Input == Input.LeftClick)
                     {
-                        Point absolutePoint = ConvertPointToAbsolute(new Point(1385, 644));
+                        System.Windows.Point absolutePoint = ConvertPointToAbsolute(new System.Windows.Point(1385, 644));
                         underlyingMouseSimulator.MoveMouseTo(absolutePoint.X, absolutePoint.Y);
                         underlyingMouseSimulator.LeftButtonClick();
                     }
@@ -122,16 +116,88 @@ namespace WebView2AutoExample
             });
         }
 
-        private Point ConvertPointToAbsolute(Point point)
+        private void updatePosition() => updatePosition(new PositionData(new System.Drawing.Point((int)Mouse.GetPosition(this).X, (int)Mouse.GetPosition(this).Y)));
+
+        private void updatePosition(PositionData positionData)
         {
-            return new Point((Convert.ToDouble(65535) * point.X) / Convert.ToDouble(Screen.PrimaryScreen.Bounds.Width),
+            CurrentPoint = positionData;
+        }
+
+        private System.Windows.Point ConvertPointToAbsolute(System.Windows.Point point)
+        {
+            return new System.Windows.Point((Convert.ToDouble(65535) * point.X) / Convert.ToDouble(Screen.PrimaryScreen.Bounds.Width),
                 (Convert.ToDouble(65535) * point.Y) / Convert.ToDouble(Screen.PrimaryScreen.Bounds.Height));
         }
-    }
 
-    public struct JsonObject
-    {
-        public string Key;
-        public Dictionary<string, int> Value;
+        private void Capture_Click(object sender, RoutedEventArgs e)
+        {
+            IsCapturing = true;
+
+            if (globalMouseHook == null)
+            {
+                globalMouseHook = new GlobalMouseHook();
+                globalMouseHook.OnButtonDown += GlobalMouseHook_OnButtonDown;
+                globalMouseHook.OnButtonUp += GlobalMouseHook_OnButtonUp;
+                globalMouseHook.OnMouseMove += GlobalMouseHook_OnMouseMove;
+            }
+            else
+            {
+                globalMouseHook.Dispose();
+                globalMouseHook = null;
+            }
+        }
+
+        private void GlobalMouseHook_OnButtonDown(object? sender, GlobalMouseEventArgs e)
+        {
+            System.Windows.Point p = new System.Windows.Point((double)System.Windows.Forms.Cursor.Position.X, (double)System.Windows.Forms.Cursor.Position.Y);
+
+            Start = p;// ConvertPointToAbsolute(p);
+
+            Canvas.SetLeft(RectCapture, Start.X);
+            Canvas.SetTop(RectCapture, Start.Y);
+        }
+
+        private void GlobalMouseHook_OnMouseMove(object? sender, GlobalMouseEventArgs e)
+        {
+            if (IsCapturing)
+            {
+                // Get new position
+                System.Windows.Point p = new System.Windows.Point((double)System.Windows.Forms.Cursor.Position.X, (double)System.Windows.Forms.Cursor.Position.Y);
+
+                Current = p;// ConvertPointToAbsolute(p);
+
+                // Calculate rectangle cords/size
+                X = Math.Min(Current.X, Start.X);
+                Y = Math.Min(Current.Y, Start.Y);
+                W = Math.Max(Current.X, Start.X) - X;
+                H = Math.Max(Current.Y, Start.Y) - Y;
+
+                Canvas.SetLeft(RectCapture, X);
+                Canvas.SetTop(RectCapture, Y);
+
+                // Update rectangle
+                RectCapture.Width = W;
+                RectCapture.Height = H;
+                RectCapture.SetValue(Canvas.LeftProperty, X);
+                RectCapture.SetValue(Canvas.TopProperty, Y);
+
+                // Toogle visibility
+                if (RectCapture.Visibility != Visibility.Visible)
+                    RectCapture.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void GlobalMouseHook_OnButtonUp(object? sender, GlobalMouseEventArgs e)
+        {
+            if (IsCapturing)
+            {
+                IsCapturing = false;
+
+                // Calculate rectangle cords/size
+                BitmapSource bSource = ScreenCapturer.CaptureRegion((int)X, (int)Y, (int)W, (int)H);
+
+                ScreenCapturer.Save(bSource);
+            }
+        }
     }
 }

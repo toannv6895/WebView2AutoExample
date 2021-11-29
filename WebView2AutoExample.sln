@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebView2AutoExample", "WebView2AutoExample\WebView2AutoExample.csproj", "{FFE33DA0-4985-4A82-B08D-FA15C3B0E1CF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebView2AutoExample", "WebView2AutoExample\WebView2AutoExample.csproj", "{FFE33DA0-4985-4A82-B08D-FA15C3B0E1CF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebView2AutoExample.Simulation", "WebView2AutoExample.Simulation\WebView2AutoExample.Simulation.csproj", "{9E91BE92-D47B-4AAD-8FB7-BA90325CBA51}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebView2AutoExample.Simulation", "WebView2AutoExample.Simulation\WebView2AutoExample.Simulation.csproj", "{9E91BE92-D47B-4AAD-8FB7-BA90325CBA51}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebView2AutoExample.GlobalHooks", "WebView2AutoExample.GlobalHooks\WebView2AutoExample.GlobalHooks.csproj", "{E2BB3E9B-15E3-4B1F-843C-04701485B19F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{9E91BE92-D47B-4AAD-8FB7-BA90325CBA51}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9E91BE92-D47B-4AAD-8FB7-BA90325CBA51}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9E91BE92-D47B-4AAD-8FB7-BA90325CBA51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2BB3E9B-15E3-4B1F-843C-04701485B19F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2BB3E9B-15E3-4B1F-843C-04701485B19F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2BB3E9B-15E3-4B1F-843C-04701485B19F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2BB3E9B-15E3-4B1F-843C-04701485B19F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

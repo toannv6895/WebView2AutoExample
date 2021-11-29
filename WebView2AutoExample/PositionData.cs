@@ -85,23 +85,5 @@ namespace WebView2AutoExample
             bmp.Dispose();
             return Color.FromArgb(color.R, color.G, color.B);
         }
-
-        public override string ToString() => ToString(new Settings());
-
-        public string ToString(Settings settings)
-        {
-            String s = $"Physical: {PhysicalPosition}";
-            if (settings.ScaledVisible)
-                s += $"; Scaled: {ScaledPosition}";
-            if (settings.RelativeVisible)
-                s += $"; Relative: {RelativePosition}";
-            if (settings.DpiVisible)
-                s += $"; Dpi: {Dpi}; Raw Dpi: {RawDpi}; Dpi Ratio: {DpiRawRatio}";
-            if (settings.ScreenResolutionVisible)
-                s += $"; Screen Resolution: {ScreenResolution}";
-            if (settings.PixelColorVisible)
-                s += $"; Pixel Color: {ColorTranslator.ToHtml(PixelColor)}";
-            return s;
-        }
     }
 }

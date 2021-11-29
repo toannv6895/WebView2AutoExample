@@ -16,9 +16,17 @@
             <ColumnDefinition Width="11*"/>
             <ColumnDefinition Width="39*"/>
         </Grid.ColumnDefinitions>
-        <wv2:WebView2 Name="webView" Grid.Column="1" Source="https://www.microsoft.com/" Grid.RowSpan="2"/>
-        <TextBox HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Search" VerticalAlignment="Top" Width="120" Height="18"/>
-        <Button Content="Go" HorizontalAlignment="Left" Margin="140,9,0,0" VerticalAlignment="Top" Height="20" Width="19"/>
+        <Canvas x:Name="MainBrowser" Grid.Column="1" Grid.RowSpan="2" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+            <wv2:WebView2 Name="webView" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" 
+                          Width="{Binding ElementName=MainBrowser, Path=ActualWidth}"
+                          Height="{Binding ElementName=MainBrowser, Path=ActualHeight}"
+                          Source="https://www.microsoft.com/"/>
+        </Canvas>
+        <StackPanel Orientation="Horizontal" Grid.Column="0">
+            <TextBox HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Search" VerticalAlignment="Top" Width="120" Height="18"/>
+            <Button Content="Go" HorizontalAlignment="Left" Margin="5,9,0,0" VerticalAlignment="Top" Height="20" Width="19"/>
+            <Button Content="Capture" Click="Capture_Click" HorizontalAlignment="Left" Margin="5,9,0,0" VerticalAlignment="Top"/>
+        </StackPanel>
         <DataGrid Grid.Column="0" Grid.Row="1">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Type"/>
