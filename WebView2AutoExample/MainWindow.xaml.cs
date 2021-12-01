@@ -1,28 +1,13 @@
 ﻿using Indieteur.GlobalHooks;
-using Microsoft.Web.WebView2.Core;
-using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using WindowsInput;
 
 namespace WebView2AutoExample
@@ -133,58 +118,7 @@ namespace WebView2AutoExample
         {
             IsCapturing = true;
 
-            if (globalMouseHook == null)
-            {
-                globalMouseHook = new GlobalMouseHook();
-                globalMouseHook.OnButtonDown += GlobalMouseHook_OnButtonDown;
-                globalMouseHook.OnButtonUp += GlobalMouseHook_OnButtonUp;
-                globalMouseHook.OnMouseMove += GlobalMouseHook_OnMouseMove;
-            }
-            else
-            {
-                globalMouseHook.Dispose();
-                globalMouseHook = null;
-            }
-        }
-
-        private void GlobalMouseHook_OnButtonDown(object? sender, GlobalMouseEventArgs e)
-        {
-            System.Windows.Point p = new System.Windows.Point((double)System.Windows.Forms.Cursor.Position.X, (double)System.Windows.Forms.Cursor.Position.Y);
-
-            Start = p;// ConvertPointToAbsolute(p);
-
-            Canvas.SetLeft(RectCapture, Start.X);
-            Canvas.SetTop(RectCapture, Start.Y);
-        }
-
-        private void GlobalMouseHook_OnMouseMove(object? sender, GlobalMouseEventArgs e)
-        {
-            if (IsCapturing)
-            {
-                // Get new position
-                System.Windows.Point p = new System.Windows.Point((double)System.Windows.Forms.Cursor.Position.X, (double)System.Windows.Forms.Cursor.Position.Y);
-
-                Current = p;// ConvertPointToAbsolute(p);
-
-                // Calculate rectangle cords/size
-                X = Math.Min(Current.X, Start.X);
-                Y = Math.Min(Current.Y, Start.Y);
-                W = Math.Max(Current.X, Start.X) - X;
-                H = Math.Max(Current.Y, Start.Y) - Y;
-
-                Canvas.SetLeft(RectCapture, X);
-                Canvas.SetTop(RectCapture, Y);
-
-                // Update rectangle
-                RectCapture.Width = W;
-                RectCapture.Height = H;
-                RectCapture.SetValue(Canvas.LeftProperty, X);
-                RectCapture.SetValue(Canvas.TopProperty, Y);
-
-                // Toogle visibility
-                if (RectCapture.Visibility != Visibility.Visible)
-                    RectCapture.Visibility = Visibility.Visible;
-            }
+            new RegionCaptureWindow().ShowDialog();
         }
 
         private void GlobalMouseHook_OnButtonUp(object? sender, GlobalMouseEventArgs e)
@@ -192,11 +126,6 @@ namespace WebView2AutoExample
             if (IsCapturing)
             {
                 IsCapturing = false;
-
-                // Calculate rectangle cords/size
-                BitmapSource bSource = ScreenCapturer.CaptureRegion((int)X, (int)Y, (int)W, (int)H);
-
-                ScreenCapturer.Save(bSource);
             }
         }
     }
